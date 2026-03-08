@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的電子會員卡</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        #user-name { color: #00b900; font-size: 24px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>歡迎來到集點系統</h1>
+    <p>哈囉，<span id="user-name">載入中...</span></p>
+
+    <script>
+        async function main() {
+            // 注意：請把下方的 'YOUR_LIFF_ID' 換成你剛剛在網頁上拿到的 ID
+            await liff.init({ liffId: '2009367154-fdRY4BQ8' });
+
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                document.getElementById('user-name').innerText = profile.displayName;
+            } else {
+                liff.login(); // 沒登入就引導登入
+            }
+        }
+        main();
+    </script>
+</body>
+</html>
