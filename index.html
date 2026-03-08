@@ -3,30 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的電子會員卡</title>
+    <title>電子會員集點卡</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-        #user-name { color: #00b900; font-size: 24px; font-weight: bold; }
+        body { font-family: 'PingFang TC', sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: white; width: 85%; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; }
+        .user-info { margin-bottom: 10px; font-size: 18px; color: #333; }
+        .timer { font-size: 14px; color: #888; margin-top: 10px; }
+        #points { font-size: 24px; color: #ff9500; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>歡迎來到集點系統</h1>
-    <p>哈囉，<span id="user-name">載入中...</span></p>
 
-    <script>
-        async function main() {
-            // 注意：請把下方的 'YOUR_LIFF_ID' 換成你剛剛在網頁上拿到的 ID
-            await liff.init({ liffId: '2009367154-fdRY4BQ8' });
+<div class="card">
+    <div class="user-info">歡迎回來，<span id="user-name">載入中...</span></div>
+    <div>目前點數：<span id="points">150</span> Pt</div>
+    
+    <div id="qrcode"></div>
+    
+    <div class="timer">條碼將於 <span id="seconds">60</span> 秒後自動更新</div>
+</div>
 
-            if (liff.isLoggedIn()) {
-                const profile = await liff.getProfile();
-                document.getElementById('user-name').innerText = profile.displayName;
-            } else {
-                liff.login(); // 沒登入就引導登入
-            }
+<script>
+    let qrcode;
+
+    async function main() {
+        await liff.init({ liffId: '2009367154-fdRY4BQ8' }); // 已幫你換好
+
+        if (liff.isLoggedIn()) {
+            const profile = await liff.getProfile();
+            document.getElementById('user-name').innerText = profile.displayName;
+            
+            // 初始產生第一個 QR Code
+            generateNewQR(profile.userId);
+            
+            // 設定每 60 秒更新一次
+            startTimer(profile.userId);
+        } else {
+            liff.login();
         }
-        main();
-    </script>
+    }
+
+    function generateNewQR(userId) {
+        // 防偽核心：組合 UserID + 當下時間戳記
+        const timestamp = Math.floor(Date.now() / 1000);
+        const secretToken = `LD-${userId}-${timestamp}`; 
+        
+        // 清除舊的 QR Code 並畫新的
+        document.getElementById('qrcode').innerHTML = "";
+        qrcode = new QRCode(document.getElementById("qrcode"), {
+            text: secretToken,
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        console.log("產生新的 Token:", secretToken);
+    }
+
+    function startTimer(userId) {
+        let sec = 60;
+        setInterval(() => {
+            sec--;
+            if (sec < 0) {
+                sec = 60;
+                generateNewQR(userId); // 時間到，更換條碼
+            }
+            document.getElementById('seconds').innerText = sec;
+        }, 1000);
+    }
+
+    main();
+</script>
 </body>
 </html>
